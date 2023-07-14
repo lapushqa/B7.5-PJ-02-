@@ -1,0 +1,134 @@
+# «Морской бой» В.7.5
+
+import random
+
+class Ship:
+    def __init__(self, coordinates):
+        self.coordinates = coordinates
+        self.is_destroyed = False
+
+    def hit(self, coordinate):
+        if coordinate in self.coordinates:
+            self.coordinates.remove(coordinate)
+            if len(self.coordinates) == 0:
+                self.is_destroyed = True
+            return True
+        return False
+
+
+class Board:
+    def __init__(self, ships):
+        self.ships = ships
+        self.board_size = 6
+        self.board = [['О' for _ in range(self.board_size)] for _ in range(self.board_size)]
+        self.hits = [['О' for _ in range(self.board_size)] for _ in range(self.board_size)]
+
+    def place_ships(self):
+        for ship in self.ships:
+            for coordinate in ship.coordinates:
+                row, col = coordinate
+                self.board[row][col] = '■'
+
+    def print_board(self):
+        print("  | 1 | 2 | 3 | 4 | 5 | 6|")
+        for i, row in enumerate(self.board):
+            print(i + 1, "|", " | ".join(row), "|")
+
+    def print_hits(self):
+        print("  | 1 | 2 | 3 | 4 | 5 | 6|")
+        for i, row in enumerate(self.hits):
+            print(i + 1, "|", " | ".join(row), "|")
+
+    def is_valid_coordinate(self, coordinate):
+        row, col = coordinate
+        return 0 <= row < self.board_size and 0 <= col < self.board_size
+
+    def is_ship_hit(self, coordinate):
+        for ship in self.ships:
+            if ship.hit(coordinate):
+                return True
+        return False
+
+    def is_game_over(self):
+        for ship in self.ships:
+            if not ship.is_destroyed:
+                return False
+        return True
+
+
+def get_player_move():
+    while True:
+        try:
+            move = input("Enter your move (e.g. A1): ")
+            col = ord(move[0].lower()) - ord('a')
+            row = int(move[1:]) - 1
+            return row, col
+        except (ValueError, IndexError):
+            print("Invalid move. Please try again.")
+
+
+def get_random_move(board):
+    available_moves = []
+    for row in range(board.board_size):
+        for col in range(board.board_size):
+            if board.hits[row][col] == 'О':
+                available_moves.append((row, col))
+    return random.choice(available_moves)
+
+
+def main():
+    try:
+        # Создание кораблей
+        ship1 = Ship([(0, 0), (0, 1), (0, 2)])
+        ship2 = Ship([(1, 4), (1, 5)])
+        ship3 = Ship([(3, 0), (3, 2), (3, 4), (3, 5)])
+        ship4 = Ship([(4, 4)])
+        ship5 = Ship([(5, 0), (5, 2), (5, 4)])
+        ships = [ship1, ship2, ship3, ship4, ship5]
+
+        # Создание доски
+        player_board = Board(ships)
+        computer_board = Board(ships)
+        player_board.place_ships()
+
+        # Игровой цикл
+        while True:
+            # Ход игрока
+            print("Player's turn:")
+            player_board.print_hits()
+            player_move = get_player_move()
+            if player_board.is_valid_coordinate(player_move):
+                if player_board.hits[player_move[0]][player_move[1]] != 'О':
+                    print("You've already made that move. Please try again.")
+                    continue
+                if computer_board.is_ship_hit(player_move):
+                    player_board.hits[player_move[0]][player_move[1]] = 'X'
+                    print("Hit!")
+                else:
+                    player_board.hits[player_move[0]][player_move[1]] = 'T'
+                    print("Miss!")
+                if player_board.is_game_over():
+                    print("Congratulations! You sank all the enemy ships. You win!")
+                    break
+            else:
+                print("Invalid move. Please try again.")
+
+            # Ход компьютера
+            print("Computer's turn:")
+            computer_move = get_random_move(computer_board)
+            if computer_board.is_ship_hit(computer_move):
+                computer_board.hits[computer_move[0]][computer_move[1]] = 'X'
+                print("Hit!")
+            else:
+                computer_board.hits[computer_move[0]][computer_move[1]] = 'T'
+                print("Miss!")
+            if computer_board.is_game_over():
+                print("Sorry, the computer sank all your ships. You lose.")
+                break
+
+    except Exception as e:
+        print("An error occurred:", str(e))
+
+
+if __name__ == "__main__":
+    main()
